@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter()]
-    [ValidateRange(0, [int]::MaxValue)]
+    [ValidateRange(0, 92)]
     [int] $N = 0
 )
 
@@ -10,22 +10,26 @@ function Get-Fibonacci {
     [OutputType([long])]
     param(
         [Parameter(Mandatory = $true, Position = 0)]
-        [ValidateRange(0, [int]::MaxValue)]
+        [ValidateRange(0, 92)]
         [int] $N
     )
 
     Set-StrictMode -Version Latest
     $ErrorActionPreference = 'Stop'
 
-    [long] $previous = 0
+    if ($N -eq 0) {
+        return [long] 0
+    }
+
     [long] $current = 1
-    for ($index = 0; $index -lt $N; $index++) {
+    [long] $previous = 0
+    for ($index = 1; $index -lt $N; $index++) {
         [long] $next = $previous + $current
         $previous = $current
         $current = $next
     }
 
-    return $previous
+    return $current
 }
 
 if ($MyInvocation.InvocationName -ne '.') {

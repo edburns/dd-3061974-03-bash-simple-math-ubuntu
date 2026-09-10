@@ -24,7 +24,7 @@ BeforeAll {
         $standardErrorTask = $process.StandardError.ReadToEndAsync()
         $process.WaitForExit()
         $standardOutput = $standardOutputTask.GetAwaiter().GetResult()
-        $null = $standardErrorTask.GetAwaiter().GetResult()
+        $standardError = $standardErrorTask.GetAwaiter().GetResult()
 
         $lines = if ([string]::IsNullOrEmpty($standardOutput)) {
             @()
@@ -34,8 +34,9 @@ BeforeAll {
         }
 
         return [pscustomobject]@{
-            ExitCode = $process.ExitCode
-            Lines    = @($lines)
+            ExitCode       = $process.ExitCode
+            Lines          = @($lines)
+            StandardError  = $standardError
         }
     }
 }
@@ -53,6 +54,10 @@ Describe 'Get-Fibonacci' {
         Get-Fibonacci -N 10 | Should -Be 55
     }
 
+    It 'returns the largest Fibonacci value representable by Int64' {
+        Get-Fibonacci -N 92 | Should -Be 7540113804746346429
+    }
+
     It 'returns only the numeric value without incidental output' {
         $result = @(Get-Fibonacci -N 10)
         $result.Count | Should -Be 1
@@ -62,6 +67,10 @@ Describe 'Get-Fibonacci' {
 
     It 'rejects a negative N' {
         { Get-Fibonacci -N -1 } | Should -Throw
+    }
+
+    It 'rejects an N that would overflow Int64' {
+        { Get-Fibonacci -N 93 } | Should -Throw
     }
 }
 
@@ -95,12 +104,20 @@ Describe 'math-tool.ps1 direct execution' {
         $invocation = Invoke-MathToolCli -ScriptArguments @('-N', "$N")
 
         $invocation.ExitCode | Should -Be 0
+        $invocation.StandardError | Should -BeNullOrEmpty
         $invocation.Lines.Count | Should -Be 1
         $invocation.Lines[0] | Should -BeExactly $Expected
     }
 
     It 'rejects a negative N' {
         $invocation = Invoke-MathToolCli -ScriptArguments @('-N', '-1')
+
+        $invocation.ExitCode | Should -Not -Be 0
+        $invocation.Lines | Should -BeNullOrEmpty
+    }
+
+    It 'rejects an N that would overflow Int64' {
+        $invocation = Invoke-MathToolCli -ScriptArguments @('-N', '93')
 
         $invocation.ExitCode | Should -Not -Be 0
         $invocation.Lines | Should -BeNullOrEmpty
