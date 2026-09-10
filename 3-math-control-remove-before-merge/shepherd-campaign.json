@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "campaignId": "2f2e3b72-45a8-4649-8951-45d46264d114",
+  "campaignIssueNumber": 3,
+  "campaignShortname": "math-control",
+  "repository": "edburns/dd-3061974-03-bash-simple-math-ubuntu",
+  "baseBranch": "experiment/shepherd-control",
+  "lessonPropagation": "off",
+  "campaignMetadataDirectory": "3-math-control-remove-before-merge",
+  "lessonsFile": "campaign-lessons.md",
+  "createdBy": {
+    "shepherdTaskVersion": "1.0.2",
+    "stageOutcomeProtocolVersion": 1
+  },
+  "createdAt": "2026-09-10T17:05:05Z"
+}
