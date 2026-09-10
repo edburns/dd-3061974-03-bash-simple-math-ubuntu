@@ -70,16 +70,18 @@ Describe 'math-tool.ps1 dot-sourcing' {
         $callerState = & {
             Set-StrictMode -Off
             $ErrorActionPreference = 'Continue'
-            . $script:ScriptPath
+            $dotSourceOutput = @(. $script:ScriptPath)
 
             $strictModeUnchanged = $null -eq $undefinedVariable
             [pscustomobject]@{
                 ErrorActionPreference = $ErrorActionPreference
+                DotSourceOutput       = $dotSourceOutput
                 StrictModeUnchanged   = $strictModeUnchanged
             }
         }
 
         $callerState.ErrorActionPreference | Should -Be 'Continue'
+        $callerState.DotSourceOutput | Should -BeNullOrEmpty
         $callerState.StrictModeUnchanged | Should -BeTrue
     }
 }
