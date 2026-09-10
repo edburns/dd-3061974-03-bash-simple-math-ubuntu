@@ -5,9 +5,6 @@ param(
     [int] $N = 0
 )
 
-Set-StrictMode -Version Latest
-$ErrorActionPreference = 'Stop'
-
 function Get-Fibonacci {
     [CmdletBinding()]
     [OutputType([long])]
@@ -16,6 +13,9 @@ function Get-Fibonacci {
         [ValidateRange(0, [int]::MaxValue)]
         [int] $N
     )
+
+    Set-StrictMode -Version Latest
+    $ErrorActionPreference = 'Stop'
 
     [long] $previous = 0
     [long] $current = 1
@@ -29,5 +29,7 @@ function Get-Fibonacci {
 }
 
 if ($MyInvocation.InvocationName -ne '.') {
+    Set-StrictMode -Version Latest
+    $ErrorActionPreference = 'Stop'
     Write-Output ('Fibonacci({0}) = {1}' -f $N, (Get-Fibonacci -N $N))
 }

@@ -10,10 +10,32 @@ BeforeAll {
             [string[]] $ScriptArguments
         )
 
-        $standardOutput = & $script:PwshPath -NoLogo -NoProfile -File $script:ScriptPath @ScriptArguments 2>$null
+        $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+        $startInfo.FileName = $script:PwshPath
+        $startInfo.UseShellExecute = $false
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError = $true
+        foreach ($argument in @('-NoLogo', '-NoProfile', '-File', $script:ScriptPath) + $ScriptArguments) {
+            $startInfo.ArgumentList.Add($argument)
+        }
+
+        $process = [System.Diagnostics.Process]::Start($startInfo)
+        $standardOutputTask = $process.StandardOutput.ReadToEndAsync()
+        $standardErrorTask = $process.StandardError.ReadToEndAsync()
+        $process.WaitForExit()
+        $standardOutput = $standardOutputTask.GetAwaiter().GetResult()
+        $null = $standardErrorTask.GetAwaiter().GetResult()
+
+        $lines = if ([string]::IsNullOrEmpty($standardOutput)) {
+            @()
+        }
+        else {
+            @((($standardOutput -replace '\r?\n\z', '') -split '\r?\n'))
+        }
+
         return [pscustomobject]@{
-            ExitCode = $LASTEXITCODE
-            Lines    = @($standardOutput)
+            ExitCode = $process.ExitCode
+            Lines    = @($lines)
         }
     }
 }
@@ -40,6 +62,25 @@ Describe 'Get-Fibonacci' {
 
     It 'rejects a negative N' {
         { Get-Fibonacci -N -1 } | Should -Throw
+    }
+}
+
+Describe 'math-tool.ps1 dot-sourcing' {
+    It 'does not change caller strict mode or error preference' {
+        $callerState = & {
+            Set-StrictMode -Off
+            $ErrorActionPreference = 'Continue'
+            . $script:ScriptPath
+
+            $strictModeUnchanged = $null -eq $undefinedVariable
+            [pscustomobject]@{
+                ErrorActionPreference = $ErrorActionPreference
+                StrictModeUnchanged   = $strictModeUnchanged
+            }
+        }
+
+        $callerState.ErrorActionPreference | Should -Be 'Continue'
+        $callerState.StrictModeUnchanged | Should -BeTrue
     }
 }
 
