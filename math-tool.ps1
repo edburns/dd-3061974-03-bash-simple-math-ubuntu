@@ -5,7 +5,7 @@ param(
     [string] $Operation = 'fibonacci',
 
     [Parameter()]
-    [ValidateRange(0, 2147483647)]
+    [ValidateRange(0, [int]::MaxValue)]
     [int] $N = 0
 )
 
@@ -41,7 +41,7 @@ function Get-Factorial {
     [OutputType([System.Numerics.BigInteger])]
     param(
         [Parameter(Mandatory = $true, Position = 0)]
-        [ValidateRange(0, 2147483647)]
+        [ValidateRange(0, [int]::MaxValue)]
         [int] $N
     )
 
