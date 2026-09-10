@@ -74,6 +74,27 @@ Describe 'Get-Fibonacci' {
     }
 }
 
+Describe 'Get-Factorial' {
+    It 'returns <Expected> for N = <N>' -ForEach @(
+        @{ N = 0; Expected = 1 }
+        @{ N = 1; Expected = 1 }
+        @{ N = 5; Expected = 120 }
+    ) {
+        Get-Factorial -N $N | Should -Be $Expected
+    }
+
+    It 'returns only the numeric value without incidental output' {
+        $result = @(Get-Factorial -N 5)
+        $result.Count | Should -Be 1
+        $result[0] | Should -BeOfType [System.Numerics.BigInteger]
+        $result[0] | Should -Be 120
+    }
+
+    It 'rejects a negative N' {
+        { Get-Factorial -N -1 } | Should -Throw
+    }
+}
+
 Describe 'math-tool.ps1 dot-sourcing' {
     It 'does not change caller strict mode or error preference' {
         $callerState = & {
@@ -96,12 +117,15 @@ Describe 'math-tool.ps1 dot-sourcing' {
 }
 
 Describe 'math-tool.ps1 direct execution' {
-    It 'writes exactly one result line for N = <N>' -ForEach @(
-        @{ N = 0; Expected = 'Fibonacci(0) = 0' }
-        @{ N = 1; Expected = 'Fibonacci(1) = 1' }
-        @{ N = 10; Expected = 'Fibonacci(10) = 55' }
+    It 'writes exactly one result line for <Operation> and N = <N>' -ForEach @(
+        @{ Operation = 'fibonacci'; Arguments = @('-N', '0'); N = 0; Expected = 'Fibonacci(0) = 0' }
+        @{ Operation = 'fibonacci'; Arguments = @('-Operation', 'fibonacci', '-N', '1'); N = 1; Expected = 'Fibonacci(1) = 1' }
+        @{ Operation = 'fibonacci'; Arguments = @('-Operation', 'fibonacci', '-N', '10'); N = 10; Expected = 'Fibonacci(10) = 55' }
+        @{ Operation = 'factorial'; Arguments = @('-Operation', 'factorial', '-N', '0'); N = 0; Expected = 'Factorial(0) = 1' }
+        @{ Operation = 'factorial'; Arguments = @('-Operation', 'factorial', '-N', '1'); N = 1; Expected = 'Factorial(1) = 1' }
+        @{ Operation = 'factorial'; Arguments = @('-Operation', 'factorial', '-N', '5'); N = 5; Expected = 'Factorial(5) = 120' }
     ) {
-        $invocation = Invoke-MathToolCli -ScriptArguments @('-N', "$N")
+        $invocation = Invoke-MathToolCli -ScriptArguments $Arguments
 
         $invocation.ExitCode | Should -Be 0
         $invocation.StandardError | Should -BeNullOrEmpty
@@ -118,6 +142,13 @@ Describe 'math-tool.ps1 direct execution' {
 
     It 'rejects an N that would overflow Int64' {
         $invocation = Invoke-MathToolCli -ScriptArguments @('-N', '93')
+
+        $invocation.ExitCode | Should -Not -Be 0
+        $invocation.Lines | Should -BeNullOrEmpty
+    }
+
+    It 'rejects an unsupported operation' {
+        $invocation = Invoke-MathToolCli -ScriptArguments @('-Operation', 'sum', '-N', '5')
 
         $invocation.ExitCode | Should -Not -Be 0
         $invocation.Lines | Should -BeNullOrEmpty
